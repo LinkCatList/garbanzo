@@ -19,4 +19,5 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic-errors)
 #target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined,leak)
 
 include(cmake/pqxx.cmake)
+include(cmake/fmt.cmake)
 include(cmake/httplib.cmake)
