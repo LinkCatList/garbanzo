@@ -8,3 +8,5 @@ struct User {
     std::string city;
     int64_t cash;
 };
+
+

@@ -1,4 +1,5 @@
 cpp-httplib
 build
-.vscode
 .env
+include
+.cache
