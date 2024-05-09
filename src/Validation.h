@@ -1,5 +1,6 @@
 #include <cctype>
 #include <string>
+#include "Base.h"
 #include <iostream>
 #include <regex>
 
@@ -36,4 +37,9 @@ inline bool validate_login (std::string &login) {
 
 inline bool validate_city (std::string &city) {
 
+}
+
+inline bool validate_user (User &u) {
+    return validate_password(u.password) && validate_city(u.city) &&
+        validate_email(u.email) && validate_login(u.login);
 }
