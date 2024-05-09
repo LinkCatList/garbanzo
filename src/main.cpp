@@ -1,12 +1,14 @@
 #include <httplib.h>
 #include "Database.h"
 
-int main() {
+int32_t main() {
 
     httplib::Server svr;
 
     svr.Get("/ping", [](const httplib::Request &, httplib::Response &res) {
-        res.set_content("OK!", "text/plain");
+        std::string responseString = R"({"Status" : "ok"})";
+        res.set_content(responseString, "application/json");
     });
+    
     svr.listen("localhost", 1337);
 }
