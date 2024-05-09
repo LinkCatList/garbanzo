@@ -19,5 +19,7 @@ int32_t main() {
     svr.Post("/register", [&db](const httplib::Request &req, httplib::Response &res){
         handle_register(req, res, db);
     });
+
+    
     svr.listen("localhost", 1337);
 }

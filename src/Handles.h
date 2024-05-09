@@ -1,8 +1,10 @@
+#include <string>
 #include "Database.h"
 #include "Validation.h"
 #include <httplib.h>
 #include <nlohmann/json.hpp>
-#include <string>
+#include <bcrypt.h>
+
 using json = nlohmann::json;
 
 
@@ -17,13 +19,15 @@ inline void handle_register (const httplib::Request &req, httplib::Response &res
                 req.get_param_value("city"),
                 0
             };
-
+        
             if (!validate::validate_user(u, db)) {
                 res.status = 400;
                 res.set_content(R"({"Reason" : "Invalid user's data"})", "application/json");
                 return;
             }
 
+            std::string hash = bcrypt::generateHash(u.password);
+            u.password = hash;
 
             db.exec("insert into users (login, hash_password, email, img_link, city, cash) "
                 "values ($1, $2, $3, $4, $5, $6)", u.login, u.password, u.email, u.img_link, u.city, 
@@ -39,12 +43,16 @@ inline void handle_register (const httplib::Request &req, httplib::Response &res
                 {"city", u.city},
                 {"cash", u.cash}
             };
+
             res.status = 201;
-            std::cout << j << "\n";
             res.set_content(j.dump(), "application/json");
     }
     else {
         res.status = 400;
         res.set_content(R"({"Reason" : "Empty user's register fields"})", "application/json");
     }
+}
+
+inline void handle_auth (const httplib::Request &req, httplib::Response &res, Database &db) {
+    
 }

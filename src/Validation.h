@@ -25,25 +25,24 @@ namespace validate {
                 wasUp = true;
             }
         }
-        std::cout << "validate_password_flag = " << (wasDigit && wasLow && wasUp) << "\n";
+        // std::cout << "validate_password_flag = " << (wasDigit && wasLow && wasUp) << "\n";
         return wasDigit && wasLow && wasUp;
     }
 
     inline bool validate_email (std::string &email) {
-        // auto reg = std::regex("([^.])([\\w-\\.]+)([^.])@((?:\\w+\\.)+)([a-zA-Z]{2,4})");
+        auto reg = std::regex(R"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)");
         // std::cout << "validate_email_flag = " << (std::regex_match(email, reg) && (email.size() <= 50)) << "\n";
-        // return std::regex_match(email, reg) && (email.size() <= 50);
-        return true;
+        return std::regex_match(email, reg) && (email.size() <= 50);
     }
 
     inline bool validate_login (std::string &login) {
-        std::cout << "validate_login_flag = " << (4 < login.size() && login.size() < 12) << "\n";
+        // std::cout << "validate_login_flag = " << (4 < login.size() && login.size() < 12) << "\n";
         return 4 < login.size() && login.size() < 12;
     }
 
     inline bool validate_city (std::string &city, Database &db) {
         bool flag = db.queryValue<bool>("select exists(select 1 from cities where name=$1)", city);
-        std::cout << "validate_city_flag = " << flag << "\n";
+        // std::cout << "validate_city_flag = " << flag << "\n";
         return flag;
     }
 

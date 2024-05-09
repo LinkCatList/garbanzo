@@ -9,4 +9,3 @@ struct User {
     int64_t cash;
 };
 
-
