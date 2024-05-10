@@ -1,6 +1,0 @@
-[submodule "deps/xxHash"]
-	path = deps/xxHash
-	url = https://github.com/Cyan4973/xxHash.git
-[submodule "deps/jwt-cpp"]
-	path = deps/jwt-cpp
-	url = https://github.com/Thalhammer/jwt-cpp
