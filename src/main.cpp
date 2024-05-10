@@ -6,13 +6,6 @@
 #include <jwt-cpp/jwt.h>
 
 int32_t main() {
-
-    std::string token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXUyJ9.eyJpc3MiOiJhdXRoMCIsInNhbXBsZSI6InRlc3QifQ.lQm3N2bVlqt2-1L-FsOjtR6uE-L4E9zJutMWKIe1v1M";
-    auto decoded = jwt::decode(token);
- 
-    for(auto& e : decoded.get_payload_json())
-        std::cout << e.first << " = " << e.second << std::endl;
-    
     dotenv::init();
     const std::string URL = std::getenv("URL");
 
@@ -29,6 +22,9 @@ int32_t main() {
         handle_register(req, res, db);
     });
 
-    
+    svr.Get("/sign-in", [&db](const httplib::Request &req, httplib::Response &res) {
+        handle_sign_in(req, res, db);
+    });
+
     svr.listen("localhost", 1337);
 }
