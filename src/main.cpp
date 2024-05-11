@@ -1,7 +1,6 @@
 #include <iostream>
 #include <httplib.h>
-#include "Database.h"
-#include "Handles.h"
+#include "Handlers.h"
 #include "../include/laserpants/dotenv/dotenv.h"
 #include <jwt-cpp/jwt.h>
 
@@ -22,8 +21,13 @@ int32_t main() {
         handle_register(req, res, db);
     });
 
+    // тут будет post вместо get
     svr.Get("/sign-in", [&db](const httplib::Request &req, httplib::Response &res) {
         handle_sign_in(req, res, db);
+    });
+
+    svr.Post("/get-profile", [&db](const httplib::Request &req, httplib::Response &res) {
+        handle_get_profile(req, res, db);
     });
 
     svr.listen("localhost", 1337);

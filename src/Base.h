@@ -1,3 +1,6 @@
+#pragma once
+
+#include "jwt-cpp/jwt.h"
 #include <string>
 #include <bcrypt.h>
 
@@ -18,12 +21,25 @@ struct User {
     }
 };
 
-struct Token {
-    std::string access;
-    std::string refresh;
-};
-
 inline std::string hash_string (std::string user_password) {
     std::string hash = bcrypt::generateHash(user_password);
     return hash;
+}
+
+inline std::string generate_jwt_access_token (const std::string &user_id) {
+    auto token = jwt::create()
+        .set_type("JWS")
+        .set_payload_claim("user_id", jwt::claim(user_id))
+        .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{600})
+        .sign(jwt::algorithm::hs256{SECRET_KEY});
+    return token;
+}
+
+inline std::string generate_jwt_refresh_token(const std::string &user_id) {
+    auto token = jwt::create()
+        .set_type("JWS")
+        .set_payload_claim("user_id", jwt::claim(user_id))
+        .set_expires_at(std::chrono::system_clock::now() + std::chrono::seconds{2592000})
+        .sign(jwt::algorithm::hs256{SECRET_KEY});
+    return token;
 }
