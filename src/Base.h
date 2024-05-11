@@ -1,4 +1,7 @@
 #include <string>
+#include <bcrypt.h>
+
+const std::string SECRET_KEY = "21421r32fgwdf45";
 
 struct User {
     std::string login;
@@ -14,3 +17,13 @@ struct User {
                 city(city_), cash(cash_) {
     }
 };
+
+struct Token {
+    std::string access;
+    std::string refresh;
+};
+
+inline std::string hash_string (std::string user_password) {
+    std::string hash = bcrypt::generateHash(user_password);
+    return hash;
+}

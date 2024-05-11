@@ -12,7 +12,7 @@ create table if not exists tokens (
     id serial primary key,
     user_id bigint,
     hash_refresh_token text,
-    expires_at bigint
+    hash_access_token text
 );
 
 create table if not exists items (
