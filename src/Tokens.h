@@ -79,7 +79,7 @@ inline std::pair<std::string, std::string> update_tokens (const std::string &acc
     }
     else {
         val = token_validation::validate_refresh_token(t.refresh, db);
-        if (!val.first) {
+        if (!val.first) { // если refresh token невалидный, то юзер не получит новую пару токенов
             return {"", ""};
         }
 

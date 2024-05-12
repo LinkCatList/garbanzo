@@ -21,8 +21,7 @@ int32_t main() {
         handle_register(req, res, db);
     });
 
-    // тут будет post вместо get
-    svr.Get("/sign-in", [&db](const httplib::Request &req, httplib::Response &res) {
+    svr.Post("/sign-in", [&db](const httplib::Request &req, httplib::Response &res) {
         handle_sign_in(req, res, db);
     });
 
