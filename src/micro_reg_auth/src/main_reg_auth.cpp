@@ -6,6 +6,20 @@
 #include <librdkafka/rdkafkacpp.h>
 
 int32_t main() {
+
+    // std::string brokers = "localhost:9092";
+    // std::string topic_str = "test_topic";
+    // std::string errstr;
+
+    // RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+    // conf->set("metadata.broker.list", brokers, errstr);
+
+    // RdKafka::Producer *producer = RdKafka::Producer::create(conf, errstr);
+    // if (!producer) {
+    //     std::cerr << "Failed to create producer: " << errstr << std::endl;
+    //     return 1;
+    // }
+    
     dotenv::init();
     const std::string URL = std::getenv("URL1");
 
