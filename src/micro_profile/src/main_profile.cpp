@@ -43,43 +43,51 @@ int32_t main() {
         return 1;
     }
 
-    while (true) {
-        RdKafka::Message *msg = consumer->consume(1000);
-        switch (msg->err()) {
-        case RdKafka::ERR__TIMED_OUT:
-            break;
-
-        case RdKafka::ERR_NO_ERROR:
-            {
-                auto payload = static_cast<const char *>(msg->payload());
-                std::string payload_str = payload;
-                add_payload_user_to_db(payload_str, db);
-                std::cout << "ok\n";
+    std::thread worker1([&consumer, &db]{
+        while (true) {
+            RdKafka::Message *msg = consumer->consume(1000);
+            switch (msg->err()) {
+            case RdKafka::ERR__TIMED_OUT:
                 break;
+
+            case RdKafka::ERR_NO_ERROR:
+                {
+                    auto payload = static_cast<const char *>(msg->payload());
+                    std::string payload_str = payload;
+                    add_payload_user_to_db(payload_str, db);
+                    std::cout << "ok\n";
+                    break;
+                }
+            case RdKafka::ERR__PARTITION_EOF:
+                std::cerr << "Reached end of partition" << std::endl;
+                break;
+
+            case RdKafka::ERR_UNKNOWN_TOPIC_OR_PART:
+                std::cerr << "Unknown topic or partition" << std::endl;
+                break;
+
+            default:
+                std::cerr << "Consume failed: " << msg->errstr() << std::endl;
+                return 1;
             }
-        case RdKafka::ERR__PARTITION_EOF:
-            std::cerr << "Reached end of partition" << std::endl;
-            break;
-
-        case RdKafka::ERR_UNKNOWN_TOPIC_OR_PART:
-            std::cerr << "Unknown topic or partition" << std::endl;
-            break;
-
-        default:
-            std::cerr << "Consume failed: " << msg->errstr() << std::endl;
-            return 1;
+            delete msg;
         }
-        delete msg;
-    }
+    });
 
     // ------------------------------------------
 
 
 
     httplib::Server svr;
-    svr.Post("/get-profile", [&db](const httplib::Request &req, httplib::Response &res) {
-        handle_get_profile(req, res, db);
+    std::thread worker2([&svr, &db]{
+        svr.Post("/get-profile", [&db](const httplib::Request &req, httplib::Response &res) {
+            handle_get_profile(req, res, db);
+        });
+
+        svr.listen("localhost", 1338);
     });
 
-    svr.listen("localhost", 1338);
+    worker1.join();
+    worker2.join(); 
+    
 }
