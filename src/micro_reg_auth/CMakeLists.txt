@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
 project(garbanzo1 LANGUAGES CXX)
-include_directories(/usr/local/bin/librdkafka/3.7.0/include/) 
-link_directories(/usr/local/bin/librdkafka/3.7.0/lib/) 
-set(CMAKE_EXE_LINKER_FLAGS "-lrdkafka++ -lrdkafka")
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,11 +11,10 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE -lrdkafka) 
-
 target_compile_options(${PROJECT_NAME} PRIVATE -O0 -g)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic-errors)
 
+target_link_libraries(${PROJECT_NAME} PRIVATE rdkafka++)
 
 #target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined,leak)
 #target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined,leak)

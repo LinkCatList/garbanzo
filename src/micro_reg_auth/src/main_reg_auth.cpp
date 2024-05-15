@@ -7,19 +7,22 @@
 
 int32_t main() {
 
-    // std::string brokers = "localhost:9092";
-    // std::string topic_str = "test_topic";
-    // std::string errstr;
+    // ----------------------------------------------------------------
 
-    // RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
-    // conf->set("metadata.broker.list", brokers, errstr);
+    std::string brokers = "localhost:9092";
+    std::string topic_str = "test_topic";
+    std::string errstr;
 
-    // RdKafka::Producer *producer = RdKafka::Producer::create(conf, errstr);
-    // if (!producer) {
-    //     std::cerr << "Failed to create producer: " << errstr << std::endl;
-    //     return 1;
-    // }
+    RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+    conf->set("metadata.broker.list", brokers, errstr);
+
+    RdKafka::Producer *producer = RdKafka::Producer::create(conf, errstr);
+    if (!producer) {
+        std::cerr << "Failed to create producer: " << errstr << std::endl;
+        return 1;
+    }
     
+    // ----------------------------------------------------------------
     dotenv::init();
     const std::string URL = std::getenv("URL1");
 
@@ -32,8 +35,8 @@ int32_t main() {
     });
     
 
-    svr.Post("/register", [&db](const httplib::Request &req, httplib::Response &res){
-        handle_register(req, res, db);
+    svr.Post("/register", [&db, &producer](const httplib::Request &req, httplib::Response &res){
+        handle_register(req, res, db, producer);
     });
 
     svr.Post("/sign-in", [&db](const httplib::Request &req, httplib::Response &res) {

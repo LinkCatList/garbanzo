@@ -1,8 +1,10 @@
 #pragma once
 
 #include <exception>
+#include <librdkafka/rdkafkacpp.h>
 #include <string>
 #include "Database.h"
+#include "Kafka.h"
 #include "../../Base.h"
 #include "../../Validation.h"
 #include <httplib.h>
@@ -10,7 +12,7 @@
 #include <json/json.h>
 #include <jwt-cpp/jwt.h>
 
-inline void handle_register (const httplib::Request &req, httplib::Response &res, Database &db) {
+inline void handle_register (const httplib::Request &req, httplib::Response &res, Database &db, RdKafka::Producer *producer) {
     std::istringstream iss(req.body);
     Json::Value j;
     Json::CharReaderBuilder builder;
@@ -65,15 +67,25 @@ inline void handle_register (const httplib::Request &req, httplib::Response &res
     std::string user_id = db.queryValue<std::string>("select user_id from users where login=$1", u.login);
 
     Json::Value js;
-    j["user_id"] = user_id;
-    j["login"] = u.login;
-    j["email"] = u.email;
-    j["img_link"] = u.img_link;
-    j["city"] = u.city;
-    j["cash"] = u.cash;
+    js["user_id"] = user_id;
+    js["login"] = u.login;
+    js["email"] = u.email;
+    js["img_link"] = u.img_link;
+    js["city"] = u.city;
+    js["cash"] = u.cash;
     Json::StreamWriterBuilder builder2; // биндинг json к строке
-    const std::string json_str = Json::writeString(builder2, j);
+    const std::string json_str = Json::writeString(builder2, js);
 
+    // отправляет данные пользователя на микросервис профиля, для добавления их там в бд
+    bool success = send_payload(json_str, "my_topic", producer);
+    if (!success) {
+        res.status = 500;
+        std::string responseString = R"({"Reason" : "Error while send msg"})";
+        res.set_content(responseString, "application/json");
+        return;
+    }
+    // ТУДУ:
+    // прежде чем отправлять сообщение, что юзер зареган, нужно дождаться ответа микросервиса профиля о регистрации
     res.status = 201;
     res.set_content(json_str, "application/json");
 
