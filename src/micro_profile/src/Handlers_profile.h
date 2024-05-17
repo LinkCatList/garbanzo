@@ -53,7 +53,9 @@ inline void handle_get_profile (const httplib::Request &req, httplib::Response &
     auto decoded_jwt = jwt::decode(t.refresh);
     auto user_id = decoded_jwt.get_payload_claim("user_id").as_string();
     
+
     auto row = db.queryRow("select * from users where user_id=$1", user_id);
+
 
     Json::Value j_profile;
     j_profile["user_id"] = row["user_id"].as<std::string>();

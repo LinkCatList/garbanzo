@@ -1,4 +1,3 @@
-#include <httplib.h>
 #include <librdkafka/rdkafkacpp.h>
 
 inline bool send_payload (const std::string &payload, const std::string &topic, RdKafka::Producer *producer) {
@@ -8,8 +7,8 @@ inline bool send_payload (const std::string &payload, const std::string &topic, 
         RdKafka::Producer::RK_MSG_COPY /* Копируем payload */,
         (void *)payload.c_str(), 
         payload.size(),          // Размер payload
-        NULL,                    // Ключ (необязательный)
-        0,                       
+        "1",                    // Ключ (профиль <- регистрация)
+        1,                       
         0,                      
         NULL
     );  

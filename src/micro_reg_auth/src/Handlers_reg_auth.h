@@ -12,7 +12,8 @@
 #include <json/json.h>
 #include <jwt-cpp/jwt.h>
 
-inline void handle_register (const httplib::Request &req, httplib::Response &res, Database &db, RdKafka::Producer *producer) {
+inline void handle_register (const httplib::Request &req, httplib::Response &res, Database &db, RdKafka::Producer *producer,
+    RdKafka::KafkaConsumer *consumer) {
     std::istringstream iss(req.body);
     Json::Value j;
     Json::CharReaderBuilder builder;
@@ -76,18 +77,80 @@ inline void handle_register (const httplib::Request &req, httplib::Response &res
     Json::StreamWriterBuilder builder2; // биндинг json к строке
     const std::string json_str = Json::writeString(builder2, js);
 
+
+    std::mutex res_mutex;
+
     // отправляет данные пользователя на микросервис профиля, для добавления их там в бд
-    bool success = send_payload(json_str, "my_topic", producer);
-    if (!success) {
-        res.status = 500;
-        std::string responseString = R"({"Reason" : "Error while send msg"})";
-        res.set_content(responseString, "application/json");
-        return;
-    }
+    std::thread worker1([&json_str, &producer, &res, &res_mutex]{
+        bool success = send_payload(json_str, "my_topic", producer);
+        std::cout << "send" << std::endl;
+        if (!success) {
+            std::lock_guard<std::mutex> lock(res_mutex);
+            res.status = 500;
+            std::string responseString = R"({"Reason" : "Error while send msg"})";
+            res.set_content(responseString, "application/json");
+            return;
+        }
+    });
+
+
+    std::thread worker2([&res, &consumer, &json_str, &res_mutex]{
+        std::cout << "capybara"<< std::endl;
+        int timeout_ms = 10000; // 50 секунд таймаут
+        auto start_time = std::chrono::high_resolution_clock::now();
+        
+        std::string response = "";
+        while (response == "") {
+            auto current_time = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(current_time - start_time);
+            if (duration.count() > timeout_ms) {
+                std::lock_guard<std::mutex> lock(res_mutex);
+                res.status = 504; // Gateway Timeout
+                res.set_content(R"({"Reason" : "Timeout waiting for profile service"})", "application/json");
+                return; 
+            }
+            RdKafka::Message *msg = consumer->consume(1000);
+            // раскомментить в случае треша
+            // std::cerr << msg->errstr() << std::endl;
+            switch (msg->err()) {
+            case RdKafka::ERR__TIMED_OUT:
+                break;
+
+            case RdKafka::ERR_NO_ERROR:
+                {  
+                    const char* key_data = static_cast<const char*>(msg->key_pointer());
+                    std::string key(key_data, msg->key_len()); 
+                    std::cout << key << std::endl;
+                    if (key == "2") { // если сообщение пришло от регистрации
+                        auto payload = static_cast<const char *>(msg->payload());
+                        std::string payload_str = payload;
+                        std::cout << payload_str << "\n";
+                        response = payload_str;
+                    }
+                    break;
+                }
+            case RdKafka::ERR__PARTITION_EOF:
+                std::cerr << "Reached end of partition" << std::endl;
+                break;
+
+            case RdKafka::ERR_UNKNOWN_TOPIC_OR_PART:
+                std::cerr << "Unknown topic or partition" << std::endl;
+                break;
+
+            default:
+                std::cerr << "Consume failed: " << msg->errstr() << std::endl;
+                return;
+            }
+            delete msg;
+        }
+        std::lock_guard<std::mutex> lock(res_mutex);
+        res.status = 201;
+        res.set_content(json_str, "application/json");
+    });
+    worker1.join();
+    worker2.join();
     // ТУДУ:
     // прежде чем отправлять сообщение, что юзер зареган, нужно дождаться ответа микросервиса профиля о регистрации
-    res.status = 201;
-    res.set_content(json_str, "application/json");
 
 }
 

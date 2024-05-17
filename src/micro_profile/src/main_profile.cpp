@@ -6,6 +6,7 @@
 #include "Kafka.h"
 #include "Database.h"
 #include <librdkafka/rdkafkacpp.h>
+#include <ostream>
 
 int32_t main() {
 
@@ -14,23 +15,22 @@ int32_t main() {
     const std::string URL = std::getenv("URL1");
     Database db(URL);
     // ------------------------------------------
-    std::cout << "ok\n";
     
     std::string errstr;
-    std::string brokers = "localhost:9092"; // Замените на адреса ваших брокеров
-    std::string topic = "my_topic"; // Замените на имя вашего топика
-    std::string group_id = "test_group"; // Замените на ID вашей группы потребителей
+    std::string brokers = "localhost:9092"; 
+    std::string topic = "my_topic"; 
+    std::string group_id = "test_group2"; 
 
     // Create configuration objects
-    RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+    RdKafka::Conf *consumer_conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
 
     // Set configuration properties
-    conf->set("bootstrap.servers", brokers, errstr);
-    conf->set("group.id", group_id, errstr);
-    conf->set("auto.offset.reset", "earliest", errstr);
+    consumer_conf ->set("bootstrap.servers", brokers, errstr);
+    consumer_conf ->set("group.id", group_id, errstr);
+    consumer_conf ->set("auto.offset.reset", "earliest", errstr);
 
     // Create KafkaConsumer instance
-    RdKafka::KafkaConsumer *consumer = RdKafka::KafkaConsumer::create(conf, errstr);
+    RdKafka::KafkaConsumer *consumer = RdKafka::KafkaConsumer::create(consumer_conf, errstr);
     if (!consumer) {
         std::cerr << "Failed to create consumer: " << errstr << std::endl;
         return 1;
@@ -42,20 +42,43 @@ int32_t main() {
         RdKafka::err2str(err) << std::endl;
         return 1;
     }
+    
+    RdKafka::Conf *producer_conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+    producer_conf->set("metadata.broker.list", brokers, errstr);
 
-    std::thread worker1([&consumer, &db]{
+    RdKafka::Producer *producer = RdKafka::Producer::create(producer_conf, errstr);
+    if (!producer) {
+        std::cerr << "Failed to create producer: " << errstr << std::endl;
+        return 1;
+    }
+    std::cout << "ok\n";
+    std::thread worker1([&consumer, &db, &producer]{
         while (true) {
             RdKafka::Message *msg = consumer->consume(1000);
+            // раскомментить в случае треша
+            // std::cerr << msg->errstr() << std::endl; 
             switch (msg->err()) {
             case RdKafka::ERR__TIMED_OUT:
                 break;
 
             case RdKafka::ERR_NO_ERROR:
-                {
-                    auto payload = static_cast<const char *>(msg->payload());
-                    std::string payload_str = payload;
-                    add_payload_user_to_db(payload_str, db);
-                    std::cout << "ok\n";
+                {  
+                    const char* key_data = static_cast<const char*>(msg->key_pointer());
+                    std::string key(key_data, msg->key_len()); 
+                    if (key == "1") { // если сообщение пришло от регистрации
+                        auto payload = static_cast<const char *>(msg->payload());
+                        std::string payload_str = payload;
+                        bool success = add_payload_user_to_db(payload_str, db);
+                        std::cout << payload << std::endl;
+                        if (success) {
+                            std::string response = R"({"Status" : "ok"})";
+                            bool flag = send_payload(response, "my_topic", producer);
+                            std::cout << "send" << std::endl;
+                            if (!flag) {
+                                std::cout << "aboba" << std::endl;
+                            }
+                        }
+                    }
                     break;
                 }
             case RdKafka::ERR__PARTITION_EOF:

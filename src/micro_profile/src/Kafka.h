@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Database.h"
 #include <exception>
 #include <iostream>
@@ -37,4 +39,24 @@ inline bool add_payload_user_to_db (const std::string &json_str, Database &db) {
             u.login, u.email, u.img_link, u.city, u.cash);
         return true;
     }
+}
+
+inline bool send_payload (const std::string &payload, const std::string &topic, RdKafka::Producer *producer) {
+    RdKafka::ErrorCode resp = producer->produce(
+        topic,                   
+        RdKafka::Topic::PARTITION_UA, // Раздел (не указан)
+        RdKafka::Producer::RK_MSG_COPY /* Копируем payload */,
+        (void *)payload.c_str(), 
+        payload.size(),          // Размер payload
+        "2",                    // Ключ (профиль -> регистрация)
+        1,                       
+        0,                      
+        NULL
+    );  
+
+    if (resp != RdKafka::ERR_NO_ERROR) {
+        return false;
+    }
+    
+    return true;
 }
