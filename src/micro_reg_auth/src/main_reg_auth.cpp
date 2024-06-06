@@ -17,7 +17,7 @@ int32_t main() {
 
     std::string brokers = "localhost:9092";
     std::string topic = "my_topic";
-    std::string group_id = "test_group"; 
+    std::string group_id = "test_group1"; 
     std::string errstr;
 
     RdKafka::Conf *producer_conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);

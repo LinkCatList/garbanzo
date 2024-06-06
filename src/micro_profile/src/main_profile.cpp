@@ -19,7 +19,7 @@ int32_t main() {
     std::string errstr;
     std::string brokers = "localhost:9092"; 
     std::string topic = "my_topic"; 
-    std::string group_id = "test_group2"; 
+    std::string group_id = "test_group228"; 
 
     // Create configuration objects
     RdKafka::Conf *consumer_conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
@@ -69,10 +69,12 @@ int32_t main() {
                         auto payload = static_cast<const char *>(msg->payload());
                         std::string payload_str = payload;
                         bool success = add_payload_user_to_db(payload_str, db);
+                        std::cout << "success = " << success << "\n";
                         std::cout << payload << std::endl;
                         if (success) {
                             std::string response = R"({"Status" : "ok"})";
                             bool flag = send_payload(response, "my_topic", producer);
+                            std::cout << "flag = " << "\n";
                             std::cout << "send" << std::endl;
                             if (!flag) {
                                 std::cout << "aboba" << std::endl;

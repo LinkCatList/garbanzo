@@ -15,6 +15,7 @@ inline bool add_payload_user_to_db (const std::string &json_str, Database &db) {
     bool parsingSuccessful = reader.parse(json_str, j);
     // происходит парсинг json
     if (!parsingSuccessful) {
+        std::cout << "cant parse json" << std::endl;
         return false;
     }
 
@@ -30,6 +31,7 @@ inline bool add_payload_user_to_db (const std::string &json_str, Database &db) {
     
     bool exists = db.queryValue<bool>("select exists(select 1 from users where login=$1)", u.login);
     if (exists) {
+        std::cout << "user exists" << std::endl;
         return false;
     }
     else {
@@ -44,7 +46,7 @@ inline bool add_payload_user_to_db (const std::string &json_str, Database &db) {
 inline bool send_payload (const std::string &payload, const std::string &topic, RdKafka::Producer *producer) {
     RdKafka::ErrorCode resp = producer->produce(
         topic,                   
-        RdKafka::Topic::PARTITION_UA, // Раздел (не указан)
+        RdKafka::Topic::PARTITION_UA, // Раздел 
         RdKafka::Producer::RK_MSG_COPY /* Копируем payload */,
         (void *)payload.c_str(), 
         payload.size(),          // Размер payload

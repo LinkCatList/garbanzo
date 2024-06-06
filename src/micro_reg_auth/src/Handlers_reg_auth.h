@@ -111,7 +111,7 @@ inline void handle_register (const httplib::Request &req, httplib::Response &res
             }
             RdKafka::Message *msg = consumer->consume(1000);
             // раскомментить в случае треша
-            // std::cerr << msg->errstr() << std::endl;
+            std::cerr << msg->errstr() << std::endl;
             switch (msg->err()) {
             case RdKafka::ERR__TIMED_OUT:
                 break;
@@ -124,7 +124,7 @@ inline void handle_register (const httplib::Request &req, httplib::Response &res
                     if (key == "2") { // если сообщение пришло от регистрации
                         auto payload = static_cast<const char *>(msg->payload());
                         std::string payload_str = payload;
-                        std::cout << payload_str << "\n";
+                        std::cout << "ok" << payload_str << "\n";
                         response = payload_str;
                     }
                     break;

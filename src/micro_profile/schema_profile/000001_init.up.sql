@@ -6,3 +6,8 @@ create table if not exists users (
     city text,
     cash bigint
 );
+
+create table if not exists favourites (
+    user_id bigint,
+    item_id bigint
+);
